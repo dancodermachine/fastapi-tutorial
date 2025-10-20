@@ -78,7 +78,7 @@ We need a tool to make HTTP requests to our API.
 
 ## RESTful API
 `python -m uvicorn code:app --reload`
-`http://127.0.0.1:8000/docs` -> FastAPI will automatically list all your defined endpoints and provide documenttion about the expected inputs and outputs. You can even try each endpoint directly in this web interface.
+`http://127.0.0.1:8000/docs` -> FastAPI will automatically list all your defined endpoints and provide documention about the expected inputs and outputs. You can even try each endpoint directly in this web interface.
 
 ### Handling Request Parameters
 The main goal of a **representational state transfer (REST)** API is to provide a structured way to interact with data. As such, it is crucial for the end user to send some information to tialor the response they need, such as path parameters, query parameter, body payloads, headers, and so on.
@@ -145,6 +145,59 @@ Query parameters are a common way to add some dynamic parameters to a URL. You c
     ```
 
 **The Request Body**<br>
+The body is the part of the HTTP request that contains raw data representing documents, files, or form submissions. In a REST API, it's usually encoded in JSON and used to create structured objects in a database. Use the `Body` function; otherwise, FastAPI will look for it inside the query parameters by default.
+
+`http -v POST http://localhost:8000/users \
+  Content-Type:application/json \
+  <<< '{"name": "John", "age": 30}'`
+```python
+@app.post("/users")
+async def create_user(name: str = Body(...), age: int = Body(...)):
+    return {"name": name, "age": age}
+```
+
+Defining payload validations such as this has some major drawbacks:
+1. Quite verbose and makes the path operation function prototype huge.
+2. You'll need to reuse the data structure on other endpoints or in other parts of your application.
+
+Solution: Pydantic models. It is a Python library for data validation and is based on classes and type hints. In fact, the `Path`, `Query`, and `Body` functions that we've learned about so far use Pydantic under the hood!
+
+```python
+class User(BaseModel):
+    name: str
+    age: int
+
+@app.post("/users")
+async def create_user(user: User):
+    return user
+```
+Sometimes, you might have several objects that you wish to send in the same payload all at once.
+
+```echo '{"user": {"name": "John", "age": 30}, "company": {"name": "ACME"}}' | http POST http://localhost:8000/users```
+```python
+class User(BaseModel):
+    name: str
+    age: int
+
+class Company(BaseModel):
+    name: str
+
+@app.post("/users")
+async def create_user(user: User, company: Company):
+    return {"user": user, "company": company}
+```
+You can even add singular body values with the `Body` function.
+
+`echo '{"user": {"name": "John", "age": 30}, "priority":1}' | http POST http://localhost:8000/users`
+```python
+class User(BaseModel):
+    name: str
+    age: int
+
+@app.post("/users")
+async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
+    return {"user": user, "priority": priority}
+```
 
 **Form Data and File Uploads**<br>
 
