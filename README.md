@@ -76,6 +76,89 @@ We need a tool to make HTTP requests to our API.
 
 `pip install httpie`
 
+## RESTful API
+`python -m uvicorn code:app --reload`
+`http://127.0.0.1:8000/docs` -> FastAPI will automatically list all your defined endpoints and provide documenttion about the expected inputs and outputs. You can even try each endpoint directly in this web interface.
+
+### Handling Request Parameters
+The main goal of a **representational state transfer (REST)** API is to provide a structured way to interact with data. As such, it is crucial for the end user to send some information to tialor the response they need, such as path parameters, query parameter, body payloads, headers, and so on.
+
+` http http://localhost:800/usersHTTP/1.1`
+
+**Path Parameters**<br>
+The API path is the main thing that the end user will interact with.
+- Normal
+    ```python
+    @app.get("/users/{type}/{id}")
+    async def get_user(type: str, id: int):
+        return {"type": type, "id": id}
+    ```
+- Limiting Allowed Values
+    ```python
+    from enum import Enum
+
+    class UserType(str, Enum):
+        STANDARD = "standard"
+        ADMIN = "admin"
+
+    @app.get("/users/{type}/{id}")
+    async def get_user(type: UserType, id: int):
+        return {"type": type, "id": id}
+    ```
+- Advanced Validation: For path parameters, the function is named Path:
+    * `gt`: Greater than
+    * `ge`: Greater than or equal to
+    * `lt`: Less than
+    * `le`: Less than or equal to
+    ```python
+        @app.get("/users/{id}")
+        async def get_user(id: int = Path(..., ge=1)):
+            return {"id": id}
+    ```
+    * The are also validation options for string values, which are based on length and regular expression.
+    ```python
+        @app.get("/license-plates/{license}")
+        async def get_license_plate(license: str = Path(..., min_length=9, max_length=9)):
+            return {"license": license}
+    ```
+    ```python
+        @app.get("/license-plates/{license}")
+        async def get_license_plate(license: str = Path(..., regex=r"^\w{2}-\d{3}-\w{2}$")):
+            return {"license": license}
+    ```
+
+**Query Parameters**<br>
+Query parameters are a common way to add some dynamic parameters to a URL. You can find them at the end of the URL in the following form: `?param1=foo&param2=bar`. In a REST API, they are commonly used on read endpoints to applu pagination, a filter, a sorting order, or selecting fields.
+
+- Example 1: Function has default values which means query parameters are optional. If you wish to define a **required** parameter, simply leave out the default value. In that case, you will get a `422 error` response if you omit the parameter.<br>
+    `curl -i "http://localhost:8000/users?page=5&size=50"`
+    ```python
+    @app.get("/users")
+    async def get_user(page: int = 1, size: int = 10):
+        return {"page": page, "size": size}
+    ```
+- Example 2: Query function which works same a Path parameters.
+    ```python
+    @app.get("/users")
+    async def get_user(page: int = Query(1, gt=0), size: int = Query(10, le=100)):
+        return {"page": page, "size": size}
+    ```
+
+**The Request Body**<br>
+
+**Form Data and File Uploads**<br>
+
+**Headers and Cookies**<br>
+
+**The Request Object**<br>
+
+### Customizing the Response
+
+****
+
+### Structuring a Bigger Project with Multiple Routers
+
+
 
 ## Resources:
 * [Building Data Science Applications with FastAPI by Francois Voron - Jul 2023](https://github.com/PacktPublishing/Building-Data-Science-Applications-with-FastAPI-Second-Edition/tree/main)
