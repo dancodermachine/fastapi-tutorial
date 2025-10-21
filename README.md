@@ -200,14 +200,61 @@ async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
 ```
 
 **Form Data and File Uploads**<br>
+`pip install python-multipart`
+
+* Form Data:<br>
+    - FastAPI will always output a JSON response by default, no matter the form of the input data.
+    - FastAPI doesn't allow you to define Pydantic models to validate form data. Instead, you have to manually define each field as an argument for the path operation function.
+
+    `http --ignore-stdin --form POST http://localhost:8000/users name=John age=30`
+     `http --form POST http://localhost:8000/users name=John age=30`
+    ```python
+    @app.post("/users")
+    async def create_user(name: str = Form(...), age: int = Form(...)):
+        return {"name": name, "age": age}
+    ```
+* File Uploads:<br>
+    - Files as bytes objects. `File` function.
+    
+    `http -form POST http://localhost:8000/files file@./assets/cat.jpg`
+    ```python
+    @app.post("/files")
+    async def upload_file(file: bytes = File(...)):
+        return {"file_size": len(file)}
+    ```
+    - One drawback to this approach is that the uploaded file is entirely stored in memory. So, while it'll work for small files, it is likely that you'll run into issues for large files.
+    - To fix this problem, FastAPI provides an `UploadFile` class. This class will store the data in memory up to a certain threshol and, after this, will automatically store it on disk in a temporary location.
+    
+    `http -form POST http://localhost:8000/files file@./assets/cat.jpg`
+    ```python
+    @app.post("/files")
+    async def upload_file(file: UploadFile = File(...)):
+        return {"file_name": file.filename, "content_type": file.content_type}
+    ``` 
+    - Accepting multiple files.
+
+    `http -form POST http://localhost:8000/files file@./assets/cat/.jpg file@./assets/cat.jpg`
+    ```python
+    @app.post("/files")
+    async def upload_multiple_files(files: list[UploadFile] = File(...)):
+    return [
+        {"file_name": file.filename,
+         "content_type": file.content_type} for file in files
+    ]
+    ```
 
 **Headers and Cookies**<br>
 
 **The Request Object**<br>
 
 ### Customizing the Response
+**Path Operation Parameters**<br>
 
-****
+**The Response Parameter**<br>
+
+**Raising HTTP errors**<br>
+
+**Building a Custom Response**<br>
 
 ### Structuring a Bigger Project with Multiple Routers
 
