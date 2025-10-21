@@ -2,7 +2,14 @@ from fastapi import FastAPI, Body, Form, File, UploadFile
 from enum import Enum
 from pydantic import BaseModel
 
+app = FastAPI()
 
+@app.post("/files")
+async def upload_multiple_files(files: list[UploadFile] = File(...)):
+    return [
+        {"file_name": file.filename,
+         "content_type": file.content_type} for file in files
+    ]
 
 # @app.get("/")
 # async def hello_world():
@@ -14,11 +21,4 @@ from pydantic import BaseModel
 #     5. FastAPI exposes an Asynchronous Server Gateway Interface (ASGI) - compatible application.
 #     """
 #     return {"hello": "world"}
-
-app = FastAPI()
-
-@app.post("/users")
-async def create_user(name: str = Form(...), age: int = Form(...)):
-    return {"name": name, "age": age}
-    
 

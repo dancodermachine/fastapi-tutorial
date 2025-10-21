@@ -206,8 +206,7 @@ async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
     - FastAPI will always output a JSON response by default, no matter the form of the input data.
     - FastAPI doesn't allow you to define Pydantic models to validate form data. Instead, you have to manually define each field as an argument for the path operation function.
 
-    `http --ignore-stdin --form POST http://localhost:8000/users name=John age=30`
-     `http --form POST http://localhost:8000/users name=John age=30`
+    `http --form POST http://localhost:8000/users name=John age=30 --ignore-stdin`
     ```python
     @app.post("/users")
     async def create_user(name: str = Form(...), age: int = Form(...)):
@@ -216,7 +215,7 @@ async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
 * File Uploads:<br>
     - Files as bytes objects. `File` function.
     
-    `http -form POST http://localhost:8000/files file@./assets/cat.jpg`
+    `http --form POST http://localhost:8000/files file@./assets/cat.jpg --ignore-stdin`
     ```python
     @app.post("/files")
     async def upload_file(file: bytes = File(...)):
@@ -225,7 +224,7 @@ async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
     - One drawback to this approach is that the uploaded file is entirely stored in memory. So, while it'll work for small files, it is likely that you'll run into issues for large files.
     - To fix this problem, FastAPI provides an `UploadFile` class. This class will store the data in memory up to a certain threshol and, after this, will automatically store it on disk in a temporary location.
     
-    `http -form POST http://localhost:8000/files file@./assets/cat.jpg`
+    `http --form POST http://localhost:8000/files file@./assets/cat.jpg --ignore-stdin`
     ```python
     @app.post("/files")
     async def upload_file(file: UploadFile = File(...)):
@@ -233,7 +232,12 @@ async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
     ``` 
     - Accepting multiple files.
 
-    `http -form POST http://localhost:8000/files file@./assets/cat/.jpg file@./assets/cat.jpg`
+    ```bash
+    http --form POST http://localhost:8000/files \
+    files@./assets/cat.jpg \
+    files@./assets/cat.jpg \
+    --ignore-stdin
+    ```
     ```python
     @app.post("/files")
     async def upload_multiple_files(files: list[UploadFile] = File(...)):
