@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Form, File, UploadFile 
 from enum import Enum
 from pydantic import BaseModel
 
@@ -15,12 +15,10 @@ from pydantic import BaseModel
 #     """
 #     return {"hello": "world"}
 
-class User(BaseModel):
-    name: str
-    age: int
-
 app = FastAPI()
 
 @app.post("/users")
-async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
-    return {"user": user, "priority": priority}
+async def create_user(name: str = Form(...), age: int = Form(...)):
+    return {"name": name, "age": age}
+    
+
