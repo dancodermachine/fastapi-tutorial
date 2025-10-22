@@ -1,15 +1,25 @@
-from fastapi import FastAPI, Body, Form, File, UploadFile 
+from fastapi import FastAPI, Body, Form, File, UploadFile, Header, Cookie, Request, status 
 from enum import Enum
 from pydantic import BaseModel
 
 app = FastAPI()
 
-@app.post("/files")
-async def upload_multiple_files(files: list[UploadFile] = File(...)):
-    return [
-        {"file_name": file.filename,
-         "content_type": file.content_type} for file in files
-    ]
+
+class Post(BaseModel):
+        title: str
+        nb_views: int
+
+class PublicPost(BaseModel):
+    title: str
+
+# Dummy database
+posts = {
+    1: Post(title="Hello", nb_views=100),
+}
+
+@app.get("/posts/{id}", response_model=PublicPost)
+async def get_post(id: int):
+    return posts[id]
 
 # @app.get("/")
 # async def hello_world():

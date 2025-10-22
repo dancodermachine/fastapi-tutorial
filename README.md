@@ -76,14 +76,15 @@ We need a tool to make HTTP requests to our API.
 
 `pip install httpie`
 
-## RESTful API
+## 2. RESTful API
 `python -m uvicorn code:app --reload`
+
 `http://127.0.0.1:8000/docs` -> FastAPI will automatically list all your defined endpoints and provide documention about the expected inputs and outputs. You can even try each endpoint directly in this web interface.
 
 ### Handling Request Parameters
 The main goal of a **representational state transfer (REST)** API is to provide a structured way to interact with data. As such, it is crucial for the end user to send some information to tialor the response they need, such as path parameters, query parameter, body payloads, headers, and so on.
 
-` http http://localhost:800/usersHTTP/1.1`
+`http http://localhost:800/usersHTTP/1.1`
 
 **Path Parameters**<br>
 The API path is the main thing that the end user will interact with.
@@ -130,7 +131,8 @@ The API path is the main thing that the end user will interact with.
 **Query Parameters**<br>
 Query parameters are a common way to add some dynamic parameters to a URL. You can find them at the end of the URL in the following form: `?param1=foo&param2=bar`. In a REST API, they are commonly used on read endpoints to applu pagination, a filter, a sorting order, or selecting fields.
 
-- Example 1: Function has default values which means query parameters are optional. If you wish to define a **required** parameter, simply leave out the default value. In that case, you will get a `422 error` response if you omit the parameter.<br>
+- Example 1: Function has default values which means query parameters are optional. If you wish to define a **required** parameter, simply leave out the default value. In that case, you will get a `422 error` response if you omit the parameter.
+
     `curl -i "http://localhost:8000/users?page=5&size=50"`
     ```python
     @app.get("/users")
@@ -248,11 +250,91 @@ async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
     ```
 
 **Headers and Cookies**<br>
+Headers contain all sorts of metadata that can be useful when handling requests. A common usage is to use them for authentication, for example, via the famous `cookies`.
+* The name of the argument determines the *key of the header* that we want to retrieve.
+* FastAPI automatically converts the header name into lowercase
+    
+    `http GET http://localhost:8000 Hello:World --ignore-stdin`
+    ```python
+    @app.get("/")
+    async def get_header(hello: str = Header(...)):
+        return {"hello": hello}
+    ```
+* Header names are usually separated by a hyphen, `-`, it also automatically converts it into snake case.
+* The user agent is an HTTP header added automatically by most HTTP clients, such as `HTTPie` or `cURL` and web browsers. It's a way for web servers to identify which kind of application made the request. In some cases, web servers can use this information to adapt the response.
+    
+    `http -v GET http://localhost:8000 --ignore-stdin`
+    ```python
+    @app.get("/")
+    async def get_header(user_agent: str = Header(...)):
+        return {"user_agent": user_agent}
+    ```
+* One special header is cookies.
+* We set a default value of `None` to the `Cookie` function. This way, even if the cookie is not set in the request, FastAPI will proceed and not generate a `422` status error response.
+    ``
+    ```python
+    @app.get("/")
+    async def get_cookie(hello: str | None = Cookie(None)):
+        return {"hello": hello}
+    ```
+* Headers and cookies are useful for implementing authentication features.
 
 **The Request Object**<br>
+Raw request object with all of the data associated with it.
+``
+```python
+@app.get("/")
+async def get_request_object(request: Request):
+    return {"path": request.url.path}
+```
 
 ### Customizing the Response
+Returning response. You can modify status code, raising validation errors, and setting cookies.
+
 **Path Operation Parameters**<br>
+* Default is `200` status when everything goes well.
+* `201` status when the execution of the endpoint ends up in the creating of a new object.
+
+    `http POST http://localhost:8000/posts title="Hello" --ignore-stdin`
+    ```python
+    class Post(BaseModel):
+        title: str
+
+    @app.post("/posts", status_code=status.HTTP_201_CREATED)
+    async def create_post(post: Post):
+        return post
+    ```
+* Interesting scenario for this option is when you have nothing to return, such as when you delete an object. In this case, the `204` status code is a good fit.
+    ```python
+    # Dummy database
+    posts = {
+        1: Post(title="Hello", nb_views=100),
+    }
+
+    @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+    async def delete_post(id: int):
+        posts.pop(id, None)
+        return None
+    ```
+* Sometimes you will find differences between the input data, the data you store in your database, and the data you want to show to the end user.
+    `http GET http://localhost:8000/posts/1 --ignore-stdin`
+    ```python
+    class Post(BaseModel):
+        title: str
+        nb_views: int
+
+    class PublicPost(BaseModel):
+        title: str
+
+    # Dummy database
+    posts = {
+        1: Post(title="Hello", nb_views=100),
+    }
+
+    @app.get("/posts/{id}", response_model=PublicPost)
+    async def get_post(id: int):
+        return posts[id]
+    ```
 
 **The Response Parameter**<br>
 
@@ -261,6 +343,12 @@ async def create_user(user: User, priority: int = Body(..., ge=1, le=3)):
 **Building a Custom Response**<br>
 
 ### Structuring a Bigger Project with Multiple Routers
+
+## 3. Managing PyDantic Data Models in FastAPI
+
+## 4. Dependency Injection in FastAPI 
+
+
 
 
 
