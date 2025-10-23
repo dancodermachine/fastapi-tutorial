@@ -337,8 +337,80 @@ Returning response. You can modify status code, raising validation errors, and s
     ```
 
 **The Response Parameter**<br>
+Sometimes you want to return some custom headers or set cookies by injecting the `Response` object as an argument of the path operation function.
+* Setting Headers: The `Response` object gives you access to a set of properties, including `headers`. It's a simple dictionary where the key is the name of the header, and the value is its associated value. Also, you don't have to return the `Response` object. You can still return JSON-encodable data.
+    
+    `http GET http://localhost:8000 --ignore-stdin`
+    ```python
+    @app.get("/")
+    async def custom_header(response: Response):
+        response.headers["Custom-Header"] = "Custom-Header-Value"
+        return {"hello": "world"}
+    ```
+* Setting Cookies: Cookies are useful when you want the user's state within the browser between each of their visits.
+
+    `http GET http://localhost:8000 --ignore-stdin`
+    ```python
+    @app.get("/")
+    async def custom_cookie(response: Response):
+        # It'll be valid for 86,400 seconds before the browser removes it.
+        response.set_cookie("cookie-name", "cookie-value", max_age=86400)
+        return {"hello": "world"}
+    ```
+* Setting the Status Code Dynamically: This won't be detected by the automatic documentation.
+
+`http PUT http://localhost:8000/posts/1 title="Updated title" --ignore-stdin`
+`http PUT http://localhost:8000/posts/2 title="New title" --ignore-stdin`
+```python
+class Post(BaseModel):
+    title: str
+
+# Dummy database
+posts = {
+    1: Post(title="Hello"),
+}
+
+@app.put("/posts/{id}")
+async def update_or_create_post(id: int, post: Post, response: Response):
+    if id not in posts:
+        response.status_code = status.HTTP_201_CREATED
+    posts[id] = post
+    return posts[id]
+```
 
 **Raising HTTP errors**<br>
+Wrong parameters, invalid payloads, or objects that don't exist anymore. It is critical to detect errors and raise a clear and unambiguous error message to the end user so that they can correct their mistake.
+
+`http POST http://localhost:8000/password password="aa" password_confirm="bb" --ignore-stdin`
+```python
+@app.post("/password")
+async def check_password(password: str = Body(...), password_confirm: str = Body(...)):
+    if password != password_confirm:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Passwords don't match.",
+        )
+    return {"message": "Passwords match."}
+```
+You are not limited to a simple string for the error message: you can return a dictionary or a list in order to get structured information about the error.
+
+`http POST http://localhost:8000/password password="aa" password_confirm="bb" --ignore-stdin`
+```python
+@app.post("/password")
+async def check_password(password: str = Body(...), password_confirm: str = Body(...)):
+    if password != password_confirm:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={
+                "message": "Passwords don't match.",
+                "hints": [
+                    "Check the caps lock on your keyboard",
+                    "Try to make the password visible by clicking on the eye icon to check your typing",
+                ],
+            },
+        )
+    return {"message": "Passwords match."}
+```
 
 **Building a Custom Response**<br>
 

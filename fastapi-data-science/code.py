@@ -1,25 +1,34 @@
-from fastapi import FastAPI, Body, Form, File, UploadFile, Header, Cookie, Request, status 
+from fastapi import (FastAPI,
+                     Body,
+                     Form,
+                     File,
+                     UploadFile,
+                     Header,
+                     Cookie,
+                     Request,
+                     status,
+                     Response,
+                     HTTPException)
 from enum import Enum
 from pydantic import BaseModel
 
 app = FastAPI()
 
 
-class Post(BaseModel):
-        title: str
-        nb_views: int
-
-class PublicPost(BaseModel):
-    title: str
-
-# Dummy database
-posts = {
-    1: Post(title="Hello", nb_views=100),
-}
-
-@app.get("/posts/{id}", response_model=PublicPost)
-async def get_post(id: int):
-    return posts[id]
+@app.post("/password")
+async def check_password(password: str = Body(...), password_confirm: str = Body(...)):
+    if password != password_confirm:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail={
+                "message": "Passwords don't match.",
+                "hints": [
+                    "Check the caps lock on your keyboard",
+                    "Try to make the password visible by clicking on the eye icon to check your typing",
+                ],
+            },
+        )
+    return {"message": "Passwords match."}
 
 # @app.get("/")
 # async def hello_world():
