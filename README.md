@@ -465,7 +465,23 @@ async def check_password(password: str = Body(...), password_confirm: str = Body
         return Response(content=content, media_type="application/xml")
     ```
 ### Structuring a Bigger Project with Multiple Routers
+```
+project_example/
+|── schemas/
+|    |── __init__.py
+|    |── post.py
+|    |── user.py
+|── routers/
+|     |── __init__.py
+|     |── posts.py
+|     |── users.py
+|── __init__.py
+|── app.py
+|── db.py
+```
+**Routers** are "sub-parts" of your API and are usually dedicated to a single type of object, such as `users` or `posts`, which are defined on their own files. The `schemas` folder contains the Pydantic models.
 
+The good thing about routrs is that you can even nest them and include sub-routers in routers that include other routers themselves. Therefore, you can have a quite complex routing hierarchy with very low effort.
 
 ## 3. Managing PyDantic Data Models in FastAPI
 
