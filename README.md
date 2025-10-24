@@ -413,8 +413,59 @@ async def check_password(password: str = Body(...), password_confirm: str = Body
 ```
 
 **Building a Custom Response**<br>
+* `JSONResponse`: This response class takes care of serialising some data to JSON and adding the correct `Content-Type` header. 
+* `HTMLResponse`: This can be used to return an HTML response.
+* `PlainTextResponse`: This can be used to return raw text.
+    ```python
+    @app.get("/html", response_class=HTMLResponse)
+    async def get_html():
+        return """
+            <html>
+                <head>
+                    <title>Hello world!</title>
+                </head>
+                <body>
+                    <h1>Hello world!</h1>
+                </body>
+            </html>
+        """
 
+    @app.get("/text", response_class=PlainTextResponse)
+    async def text():
+        return "Hello world!"
+    ```
+* `RedirectResponse`: This can be used to make a redirection. A HTTP response with a **Location** header pointing to the new URL and a status code in the 3xxrange.
+    ```python
+    @app.get("/redirect")
+    async def redirect():
+        return RedirectResponse("/new-url")
+    ```
+    ```python
+    # By default, it'' use the 307 Temporary Redirect status code, but you can change this through the `status_code` argument. 
+    @app.get("/redirect")
+    async def redirect():
+        return RedirectResponse("/new-url", status_code=status.HTTP_301_MOVED_PERMANENTLY)
+    ```
+* `StreamingResponse`: This can be used to stream a flow of bytes.
+* `FileResponse`: This can be used to automatically build a proper file response given the path of a file on the local disk. Usefful when you want to propose some files to download. This class will automatically take care of opening the file on disk and streaming the bytes along with the proper HTTP headers.
+    ```python
+    @app.get("/cat")
+    async def get_cat():
+        root_directory = Path(__file__).parent.parent
+        picture_path = root_directory / "assets" / "cat.jpg"
+        return FileResponse(picture_path)
+    ```
+* Custom response
+    ```python
+    @app.get("/xml")
+    async def get_xml():
+        content = """<?xml version="1.0" encoding="UTF-8"?>
+            <Hello>World</Hello>
+        """
+        return Response(content=content, media_type="application/xml")
+    ```
 ### Structuring a Bigger Project with Multiple Routers
+
 
 ## 3. Managing PyDantic Data Models in FastAPI
 

@@ -9,26 +9,33 @@ from fastapi import (FastAPI,
                      status,
                      Response,
                      HTTPException)
+from fastapi.responses import (HTMLResponse,
+                               PlainTextResponse,
+                               RedirectResponse,
+                               FileResponse) 
 from enum import Enum
 from pydantic import BaseModel
 
 app = FastAPI()
 
 
-@app.post("/password")
-async def check_password(password: str = Body(...), password_confirm: str = Body(...)):
-    if password != password_confirm:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "Passwords don't match.",
-                "hints": [
-                    "Check the caps lock on your keyboard",
-                    "Try to make the password visible by clicking on the eye icon to check your typing",
-                ],
-            },
-        )
-    return {"message": "Passwords match."}
+@app.get("/html", response_class=HTMLResponse)
+async def get_html():
+    return """
+        <html>
+            <head>
+                <title>Hello world!</title>
+            </head>
+            <body>
+                <h1>Hello world!</h1>
+            </body>
+        </html>
+    """
+
+
+@app.get("/text", response_class=PlainTextResponse)
+async def text():
+    return "Hello world!"
 
 # @app.get("/")
 # async def hello_world():
