@@ -16,6 +16,8 @@ from fastapi.responses import (HTMLResponse,
 from enum import Enum
 from pydantic import (BaseModel,
                       ValidationError,
+                      validator,
+                      root_validator,
                       Field,
                       EmailStr,
                       HttpUrl)
