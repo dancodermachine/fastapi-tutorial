@@ -10,7 +10,8 @@ from fastapi import (FastAPI,
                      Response,
                      HTTPException,
                      Depends,
-                     Query)
+                     Query,
+                     APIRouter)
 from fastapi.responses import (HTMLResponse,
                                PlainTextResponse,
                                RedirectResponse,

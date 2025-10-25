@@ -99,8 +99,140 @@ Another typical example of this is authentication: if the endpoint requires a us
 
 The only point of attention is to not forget the ID parameter in the path of those endpoints.
 ## Parameterized Dependency with a Class
+To set some parameters on a dependency to finely tune its behaviour. We can set class properties - with the `__init__` method, for example - and use them in the logic of the dependency itself.
+```python
+class Pagination:
+    def __init__(self, maximum_limit: int = 100):
+        self.maximum_limit = maximum_limit
+
+    async def __call__(
+        self,
+        skip: int = Query(0, ge=0),
+        limit: int = Query(10, ge=0),
+    ) -> tuple[int, int]:
+        capped_limit = min(self.maximum_limit, limit)
+        return (skip, capped_limit)
+
+pagination = Pagination(maximum_limit=50)
+
+@app.get("/items")
+async def list_items(p: tuple[int, int] = Depends(pagination)):
+    skip, limit = p
+    return {"skip": skip, "limit": limit}
+
+@app.get("/things")
+async def list_things(p: tuple[int, int] = Depends(pagination)):
+    skip, limit = p
+    return {"skip": skip, "limit": limit}
+```
+The other advantage of a class dependency is that it can maintain local values in memory. This property can be very useful if we have to make some heave initialization logic, such as loading a ML model, for example, which we want to do only once at startup. Then, the callable part just has to call the loaded model to make the prediction, which should be quite fast.
 ### Class Methods as Dependencies
+Even if the `__call__` method is the most straightforward way to make a class dependency, you can directly pass a method to `Depends`.
+This approach can be very useful if you have common parameters or logic that you need to reuse in slightly different cases. For example, you could have one pre-trained ML model made with `scikit-learn`. Before applying the decision function, you may want to apply different preprocessing steps, depending on the input data.
+```python
+class Pagination:
+    def __init__(self, maximum_limit: int = 100):
+        self.maximum_limit = maximum_limit
+
+    async def skip_limit(
+        self,
+        skip: int = Query(0, ge=0),
+        limit: int = Query(10, ge=0),
+    ) -> tuple[int, int]:
+        capped_limit = min(self.maximum_limit, limit)
+        return (skip, capped_limit)
+
+    async def page_size(
+        self,
+        page: int = Query(1, ge=1),
+        size: int = Query(10, ge=0),
+    ) -> tuple[int, int]:
+        capped_size = min(self.maximum_limit, size)
+        return (page, capped_size)
+
+pagination = Pagination(maximum_limit=50)
+
+@app.get("/items")
+async def list_items(p: tuple[int, int] = Depends(pagination.skip_limit)):
+    skip, limit = p
+    return {"skip": skip, "limit": limit}
+
+@app.get("/things")
+async def list_things(p: tuple[int, int] = Depends(pagination.page_size)):
+    page, size = p
+    return {"page": page, "size": size}
+```
 ## Dependencies at the Path, Router, and Global Level
+The main motivation for this is to be able to apply some global request validation or perform side logic on several routes without the need to add a dependency on each endpoint. Typically, an authentication method or a rate limiter could be very good candidates for this use case.
 ### Path Decorator
+You can add a dependency on a path operation decorator instead of the arguments.
+The path operation decorator accepts an argument, `dependencies`, you can add as many dependencies as you need.
+```python
+def secret_header(secret_header: str | None = Header(None)) -> None:
+    if not secret_header or secret_header != "SECRET_VALUE":
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+@app.get("/protected-route", dependencies=[Depends(secret_header)])
+async def protected_route():
+    return {"hello": "world"}
+```
 ### Whole Router
+Inject a dependency into the whole router. 2 ways to do it.
+1. Set the `dependencies` argument on the `APIRouter` class.
+    ```python
+    def secret_header(secret_header: str | None = Header(None)) -> None:
+        if not secret_header or secret_header != "SECRET_VALUE":
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+    router = APIRouter(dependencies=[Depends(secret_header)])
+
+    @router.get("/route1")
+    async def router_route1():
+        return {"route": "route1"}
+
+    @router.get("/route2")
+    async def router_route2():
+        return {"route": "route2"}
+
+    app = FastAPI()
+    app.include_router(router, prefix="/router")
+    ```
+2. Set the `dependencies` argument on the `include_router` method.
+    ```python
+    def secret_header(secret_header: str | None = Header(None)) -> None:
+        if not secret_header or secret_header != "SECRET_VALUE":
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+    router = APIRouter()
+
+    @router.get("/route1")
+    async def router_route1():
+        return {"route": "route1"}
+
+    @router.get("/route2")
+    async def router_route2():
+        return {"route": "route2"}
+
+    app = FastAPI()
+    app.include_router(router, prefix="/router", dependencies=[Depends(secret_header)])
+    ```
+In both cases, the `dependencies` argument expects a list of dependencies.
 ### Whole Application
+If you have a dependency that implements some logging or rate-limiting functionality, for example, it could be interesting to execute it for every endpoint of your API.
+```python
+def secret_header(secret_header: str | None = Header(None)) -> None:
+    if not secret_header or secret_header != "SECRET_VALUE":
+        raise HTTPException(status.HTTP_403_FORBIDDEN)
+
+app = FastAPI(dependencies=[Depends(secret_header)])
+
+@app.get("/route1")
+async def route1():
+    return {"route": "route1"}
+
+@app.get("/route2")
+async def route2():
+    return {"route": "route2"}
+```
+### Decision Tree
+                                                                                            
