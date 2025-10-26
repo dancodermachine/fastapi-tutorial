@@ -15,5 +15,18 @@ The role of a database is to store data in a structured way, preserve the integr
     - Increase query performance by limiting the neeed to look at several collections.
 
 ## SQL Database with SQLAlchemy
+* **SQLAlchemy Core**, which provides all the fundamental features to read and write data to SQL databases.
+* **SQLAlchemy ORM** which lets you interact with a relational database using objects in your code instead of raw SQL queries.
+    - Database tables -> Classes
+    - Table rows -> Class instances (objects)
+    - Table columns -> Class attributes
 
+Requirements:
+* `pip install "sqlalchemy[asyncio,mypy]"`
+* Choose driver
+    - `pip install asyncpg` -> PostgreSQL
+    - `pip install aiomysql` -> MySQL/MariaDB
+    - `pip install aiosqlite` -> SQLite (local file)
+
+You should always test your migrations in a test environment and have fressh and working backups before running them on your production database.
 ## MongoDB
