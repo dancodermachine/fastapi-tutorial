@@ -30,3 +30,8 @@ Requirements:
 
 You should always test your migrations in a test environment and have fressh and working backups before running them on your production database.
 ## MongoDB
+You don't need to configure a schema upfront: it follows the structure of the data that you insert into.
+
+Motor is a library that is used to communicate asynchronously with MongoDB.
+`pip install motor`
+

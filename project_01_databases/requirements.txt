@@ -3,3 +3,4 @@ aiosqlite
 fastapi
 uvicorn[standard]
 httpie
+motor
