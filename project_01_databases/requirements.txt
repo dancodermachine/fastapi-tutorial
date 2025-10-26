@@ -1,0 +1,6 @@
+sqlalchemy[asyncio,mypy]
+aiosqlite
+fastapi
+uvicorn[standard]
+httpie
+motor
