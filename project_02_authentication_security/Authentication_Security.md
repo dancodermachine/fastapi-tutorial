@@ -55,10 +55,18 @@ To avoid a disaster like this, we can apply **cryptographic hash functions** to 
 
 When users try to log in, we simply compute the hash of the password they input and compare it with the hash we have in our database. If they match, this means it's the right password.
 
+### Hashing Passwords
+`pip install passlib argon2_cffi`
 
+### Retrieving a User and Generating an Access Token
+Being able to log ing. 
 
-## Retrieving a User and Generating an Access Token
+We'll get the credentials from the request payload, retrieve the user with the given email, and verify their password. If the user exists and their password is valid, we'll generate an access token and return it in the response.
 
-## Securing Endpoints with Access Tokens
+Nature of the access token: It should be data string that uniquely identifies a user that is impossible to forge by a malicious third party. 
+
+We'll generate a random string and store it in a dedicated table in our database, with a foreign key referring to the user. This way, when an authenticated request arrives, we simply have to check whether it exists in the database and look for the corresponding user. The advantage of this approach is that tokens are centralized and can easily be invalidated if they are compromised; we only need to delete them from the database.
+
+To keep this example simple, we implemented a simple password comparison. Usually, it's good practice to implement a mechanism to upgrade the password hash at this stage. Imagine that a new and more robust hash algorithm has been introduced. We can take this opportunity to hash the password with this new algorithm and store it in a database. `passlib` includes a function for verifying and upgrading the hash in one operation.
 
 ## Configuring CORS and Protecting Against CSRF Attacks
