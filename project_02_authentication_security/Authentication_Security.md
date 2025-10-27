@@ -70,3 +70,13 @@ We'll generate a random string and store it in a dedicated table in our database
 To keep this example simple, we implemented a simple password comparison. Usually, it's good practice to implement a mechanism to upgrade the password hash at this stage. Imagine that a new and more robust hash algorithm has been introduced. We can take this opportunity to hash the password with this new algorithm and store it in a database. `passlib` includes a function for verifying and upgrading the hash in one operation.
 
 ## Configuring CORS and Protecting Against CSRF Attacks
+Backends are now only responsible for data storage and retrieving and executing business logic.
+
+From the JS code, the user interface can then just spawn requests to your API and handle the result to present it. However, we must still handle authentication: we want our user to be able to log in to the frontend application and make authenticated requests to the API. While an Authorization header, as we've seen so far, could work, there is a better way to handle authentication when working in browsers: **cookies**!
+
+**Cross-Site Request Forgery (CSRF)**: An attacker on another website tries to trick a user who is currently authenticated with your application to perform a request on your server. Since browsers tend to send cookies with every request, your server wouldn't be able to tell that the request was actually forged. Since it's the users themselves who unintentionally launched the malicious request, these kinds of attacks don't aim to steal data but to execute operations that change the state of the application, such as changing an email address or making a money transfer. Simple requests such us `GET`, `POST`, or `HEAD` methods don't use custom headers or unusual content types and for them, the same-origin policy is not enough to protect us against CSRF attacks.
+
+Browsers don't allow cross-origin resource sharing (CORS) HTTP requests, meaning domain A can't make requests to domain B. This follows that is called a **same-origin policy**. This is a good thing in general as it's the first barrier to preventing CSRF attacks.
+
+
+
