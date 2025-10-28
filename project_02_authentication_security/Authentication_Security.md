@@ -78,5 +78,37 @@ From the JS code, the user interface can then just spawn requests to your API an
 
 Browsers don't allow cross-origin resource sharing (CORS) HTTP requests, meaning domain A can't make requests to domain B. This follows that is called a **same-origin policy**. This is a good thing in general as it's the first barrier to preventing CSRF attacks.
 
+**CORS**: The server answers preflight queries with a set of HTTP headers that provide information to the browser about whether it's allowed to make the request or not. In that sense, CORS doesn't make your application more secure, it's quire the contrary: it allows the relaxation of some rules so that a frontend application can make requests to a backend residing on another domain. That's why it's crucial to configure CORS properly, so it doesn't expose you to dangerous attacks.
+
+When a web page tries to send a non-trivial cross-origin request (e.g., using methods like PUT, DELETE, PATCH, or custom headers), the browser first sends a preflight request to the server to check if it’s allowed.
+
+A **middleware** is a special class that adds global logic to an **Asynchronous Server Gateway Interface (ASGI)** application performing things before the request is handled by your path operation functions, and also after to possibly alter the response. FastAPI provides the `add_middleware` method for wiring such middleware into your application. Middleware is like a helper layer that sits between the web server and your actual route functions. Think of middleware as a security guard or inspector at the entrance of a building.
+
+Here **CORSMiddleware** will catch preflight requests sent by the browser and return the appropriate response with the CORS headers corresponding to your configuration. You can see that there are options to finely tune the CORS policy to your needs.
+
+The most important one is probably `allow_origins`, which is the list of origins allowed to make requests to your API. The other interesting argument is `allow_credentials`. By default, browsers don't send cookies for cross-origin HTTP requests. If we wish to make authenticated requests to our API, we need to allow this via this option. `max_age` allows you to control the cache duration of the CORS responses.
+
+### Implementing double-submit cookies to prevent CSRF attacks
+`pip install starlette-csrf`
+
+With `POST` method. If we make a request in the browser to this endpoint without any special header, it will consider it as a simple request and execute it. Therefore, an attacker could change the email of a currently authenticated user, which is a major threat. In the context of a REST API, the most straighforward technique is the double-submit cookie pattern.
+1. The user makes a first request with a method that's considered safe. Typically, this is a `GET` request.
+2. In response, it receives a cookie containing a secret random value - that is, the CSRF token.
+3. When making an unsafe request, such as `POST`, the user will read the CSRF token in the cookies and put the exact same value in the header. Since the browser also sends the cookies it has in memory, the request will contain the token both in the cookie and the header. That's wy it's called **double submit**.
+4. Before processing the request, the server will compare the CSRF token provided in the header with the one present in the cooie. If they match, it will proceed to process the request. Otherwise, it'll throw an error.
+
+This is safe for 2 reasons:
+1. An attacker targeting a third-party website can't read the cookies for a domain they don't own. Thus, they have no way of retrieving the CSRF token value.
+2. Adding a custom header is against the conditions of "simple requests". Hence, the browser will have to make a preflight request before sending the request, enforcing the CORS policy.
+
+This is a widerly used pattern that works wll to prevent such risks.
+
+A good source to understand all the security risks involved in a web application is the OWASP Cheat Sheet Series: `https//cheatsheetseries.owasp.org`.
+
+
+
+
+
+
 
 
