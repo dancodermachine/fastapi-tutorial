@@ -483,14 +483,6 @@ project_example/
 
 The good thing about routrs is that you can even nest them and include sub-routers in routers that include other routers themselves. Therefore, you can have a quite complex routing hierarchy with very low effort.
 
-## 3. Managing PyDantic Data Models in FastAPI
-
-## 4. Dependency Injection in FastAPI 
-
-
-
-
-
 ## Resources:
 * [Building Data Science Applications with FastAPI by Francois Voron - Jul 2023](https://github.com/PacktPublishing/Building-Data-Science-Applications-with-FastAPI-Second-Edition/tree/main)
 
