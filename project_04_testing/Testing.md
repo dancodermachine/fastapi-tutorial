@@ -181,4 +181,63 @@ class TestCreatePerson:
         json = response.json()
         assert json == payload
 ```
+## Test with Database
+[TODO]
+
 ## Tests for Websocket Endpoints
+`HTTPX` doesn't have built-in support to communicate with `WebSockets`. Hence, we'll need to use a plugin, `HTTPX WS`.
+
+`pip install httpx-ws`
+```python
+from fastapi import FastAPI, WebSocket
+from starlette.websockets import WebSocketDisconnect
+
+app = FastAPI()
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Message text was: {data}")
+    except WebSocketDisconnect:
+        await websocket.close()
+
+### TESTS ###
+
+import asyncio
+import httpx
+import pytest
+import pytest_asyncio
+from asgi_lifespan import LifespanManager
+from httpx_ws import aconnect_ws # Helper that opens an async WebSocket connection using an `httpx` client. It is a function to open a connection to a WebSocket enpoint. It expects the path of your WebSocket endpoint and a valid HTTPX client in an argument.
+from httpx_ws.transport import ASGIWebSocketTransport # Special transport layer for `httpx` that can talk directly to an ASGI app in memory. Instead of making real network calls over TCP, you're calling your app function directly in-process. Fast and no server needed.
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+@pytest_asyncio.fixture
+async def test_client():
+    async with LifespanManager(app):
+        async with httpx.AsyncClient(
+            transport=ASGIWebSocketTransport(app), base_url="http://app.io"
+        ) as test_client:
+        # transport=ASGIWebSocketTransport(app) plugs client directly into your ASGI app. Instead of doing real HTTP requests over the network, it calls your app's request handler in memory.
+            yield test_client
+
+@pytest.mark.asyncio
+async def test_websocket_echo(test_client: httpx.AsyncClient):
+    # It opens a context manager, giving you the websocket variable. It's an object that exposes several methods to either send or receive data. Each of those methods will block until a message has been sent or received.
+    async with aconnect_ws("/ws", test_client) as websocket:
+        await websocket.send_text("Hello")
+
+        message = await websocket.receive_text()
+        assert message == "Message text was: Hello"
+```
+This is what makes WebSocket testing a bit special: you have to think about the sequence and received messages and implement them programmatically to test the behaviour of your WebSocket.
