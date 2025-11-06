@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+httpie
+transformers[torch]
+Pillow
+python-multipart
