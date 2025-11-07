@@ -7,7 +7,11 @@ Thanks to the MediaDevices browser API, we'll be able to list all the camera inp
 */
 
 const IMAGE_INTERVAL_MS = 42;
-
+/* Use Canvas API to draw the rectangles according to the received coordinates.
+This is the purpose of the drawObjects function.
+First clean everything to remove the rectangles from the previous detection.
+Then, we loop through all the detected objects and draw a rectangle with the given coordinates: x1, y1, x2, and y2
+*/
 const drawObjects = (video, canvas, objects) => {
   const ctx = canvas.getContext('2d');
 

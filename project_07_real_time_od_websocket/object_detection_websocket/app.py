@@ -122,3 +122,8 @@ async def index():
 
 static_files_app = StaticFiles(directory=Path(__file__).parent / "assets")
 app.mount("/assets", static_files_app)
+
+# uvicorn chapter13.websocket_object_detection.app:app
+
+# Enables you to creat near real-time experiences from your users.
+# We assumed the ML model we used was fast enough to be run directly in an API endpoint or a WebSocket task
