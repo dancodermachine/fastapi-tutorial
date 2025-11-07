@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+
+  <title>Chapter 13 - Real time object detection</title>
+</head>
+
+<body>
+  <!-- Draw a green rectangle around the detected objects, along with their label. Thus, we have to find a way to take the rectangle coordinates sent by the server and draw them in the browser.-->
+  <!-- Use CSS so that this element overlays the video: this way, the rectangles will be shown right on top of the video and the corresponding objects. -->
+  <!-- We use Bootstrap -->
+  <div class="container">
+    <h1 class="my-3">Chapter 13 - Real time object detection</h1>
+    <form id="form-connect">
+      <div class="input-group mb-3">
+        <select id="camera-select"></select>
+        <button class="btn btn-success" type="submit" id="button-start">Start</button>
+      </div>
+    </form>
+    <div class="position-relative" style="width: 640px; height: 480px;">
+      <video id="video"></video>
+      <canvas id="canvas" class="position-absolute top-0 start-0"></canvas>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
